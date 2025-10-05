@@ -1,0 +1,22 @@
+{
+  "name": "neon-racer-threejs",
+  "version": "2.0.0",
+  "description": "Expérience de course futuriste Three.js - Portfolio professionnel",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 3000",
+    "serve": "npx http-server -p 3000 -o",
+    "dev": "python3 -m http.server 8080",
+    "preview": "python3 -m http.server 5000"
+  },
+  "keywords": ["threejs", "webgl", "game", "neon", "racing", "portfolio", "interactive", "3d"],
+  "author": "Maxime Martin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maximemartin/neon-racer"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

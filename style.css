@@ -1,0 +1,354 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Orbitron', monospace;
+    background: radial-gradient(ellipse at center, #0f0f23 0%, #000000 100%);
+    overflow: hidden;
+    color: #00ffff;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Loading Screen */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #0a0a0a, #1a1a2e);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 1s ease-out;
+}
+
+.loader {
+    text-align: center;
+}
+
+.loader-text {
+    font-size: 2em;
+    font-weight: 900;
+    color: #00ffff;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px #00ffff;
+    animation: pulse 2s infinite;
+}
+
+.progress-bar {
+    width: 300px;
+    height: 4px;
+    background: rgba(0, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ffff, #ff00ff);
+    width: 0%;
+    animation: loading 3s ease-in-out forwards;
+}
+
+@keyframes loading {
+    to { width: 100%; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* UI Container */
+#ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Top Bar */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
+
+.game-title {
+    font-size: 2em;
+    font-weight: 900;
+    color: #ff00ff;
+    text-shadow: 0 0 20px #ff00ff;
+    letter-spacing: 3px;
+}
+
+#score, #speed {
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 25px;
+    border-radius: 30px;
+    font-size: 1.2em;
+    font-weight: 700;
+    border: 2px solid;
+    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+#score {
+    color: #00ff88;
+    border-color: #00ff88;
+    text-shadow: 0 0 10px #00ff88;
+}
+
+#speed {
+    color: #ff6b35;
+    border-color: #ff6b35;
+    text-shadow: 0 0 10px #ff6b35;
+}
+
+/* Side Panels */
+.side-panels {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.left-panel, .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stat-box {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #00ffff;
+    min-width: 120px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+#distance, #level {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #00ffff;
+}
+
+.portfolio-info {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #ff00ff;
+}
+
+.tech-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tech-item {
+    background: linear-gradient(45deg, #ff00ff, #00ffff);
+    color: black;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Welcome Screen */
+#instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: all;
+}
+
+.welcome-screen {
+    background: rgba(0, 0, 0, 0.95);
+    padding: 50px;
+    border-radius: 20px;
+    border: 3px solid #00ffff;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
+    backdrop-filter: blur(20px);
+}
+
+.welcome-screen h1 {
+    font-size: 4em;
+    font-weight: 900;
+    color: #ff00ff;
+    text-shadow: 0 0 30px #ff00ff;
+    margin-bottom: 20px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    color: #00ffff;
+    margin-bottom: 40px;
+    opacity: 0.8;
+}
+
+.controls-info {
+    margin: 30px 0;
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+    font-size: 1.1em;
+}
+
+.key {
+    background: linear-gradient(45deg, #333, #666);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    border: 2px solid #00ffff;
+    min-width: 50px;
+    text-align: center;
+}
+
+.start-hint {
+    font-size: 1.3em;
+    color: #00ff88;
+    margin-top: 30px;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 30px #ff00ff; }
+    to { text-shadow: 0 0 50px #ff00ff, 0 0 60px #ff00ff; }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Game Over Screen */
+#gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: all;
+}
+
+.game-over-screen {
+    background: rgba(0, 0, 0, 0.95);
+    padding: 50px;
+    border-radius: 20px;
+    border: 3px solid #ff0066;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(255, 0, 102, 0.5);
+}
+
+.game-over-screen h2 {
+    font-size: 3em;
+    font-weight: 900;
+    color: #ff0066;
+    text-shadow: 0 0 30px #ff0066;
+    margin-bottom: 30px;
+}
+
+.final-stats {
+    margin: 30px 0;
+}
+
+.stat {
+    font-size: 1.3em;
+    margin: 10px 0;
+    color: #00ffff;
+}
+
+.restart-btn {
+    background: linear-gradient(45deg, #00ff88, #00ffff);
+    color: black;
+    border: none;
+    padding: 20px 40px;
+    font-size: 1.3em;
+    font-weight: 700;
+    border-radius: 30px;
+    cursor: pointer;
+    margin-top: 30px;
+    transition: all 0.3s;
+    font-family: 'Orbitron', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.restart-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.7);
+}
+
+/* Minimap */
+.minimap {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #00ffff;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+#minimapCanvas {
+    display: block;
+    border-radius: 5px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .welcome-screen {
+        padding: 30px;
+    }
+    
+    .welcome-screen h1 {
+        font-size: 2.5em;
+    }
+    
+    .game-title {
+        font-size: 1.2em;
+    }
+    
+    .side-panels {
+        display: none;
+    }
+}

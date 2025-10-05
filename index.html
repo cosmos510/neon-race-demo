@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Racing Experience - Portfolio Showcase</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loadingScreen">
+        <div class="loader">
+            <div class="loader-text">CHARGEMENT...</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ui">
+        <div class="top-bar">
+            <div id="score">SCORE: 0</div>
+            <div class="game-title">NEON RACER</div>
+            <div id="speed">0 KM/H</div>
+        </div>
+        
+        <div class="side-panels">
+            <div class="left-panel">
+                <div class="stat-box">
+                    <div class="stat-label">DISTANCE</div>
+                    <div id="distance">0m</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">NIVEAU</div>
+                    <div id="level">1</div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="portfolio-info">
+                    <div class="tech-stack">
+                        <div class="tech-item">Three.js</div>
+                        <div class="tech-item">WebGL</div>
+                        <div class="tech-item">JavaScript</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="instructions">
+            <div class="welcome-screen">
+                <h1>🏎️ NEON RACER</h1>
+                <div class="subtitle">Expérience Three.js Interactive</div>
+                <div class="controls-info">
+                    <div class="control-item">
+                        <span class="key">←</span>
+                        <span class="key">→</span>
+                        <span>Diriger la voiture</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">ESPACE</span>
+                        <span>Commencer</span>
+                    </div>
+                </div>
+                <div class="start-hint">Appuyez sur ESPACE pour commencer</div>
+            </div>
+        </div>
+        
+        <div id="gameOver" class="hidden">
+            <div class="game-over-screen">
+                <h2>MISSION TERMINÉE</h2>
+                <div class="final-stats">
+                    <div class="stat">Score: <span id="finalScore">0</span></div>
+                    <div class="stat">Distance: <span id="finalDistance">0</span>m</div>
+                    <div class="stat">Niveau atteint: <span id="finalLevel">1</span></div>
+                </div>
+                <button onclick="restartGame()" class="restart-btn">NOUVELLE MISSION</button>
+            </div>
+        </div>
+        
+        <div class="minimap">
+            <canvas id="minimapCanvas" width="150" height="200"></canvas>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
