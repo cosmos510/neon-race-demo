@@ -31,3 +31,4 @@ pids
 
 # Optional eslint cache
 .eslintcache
+.vercel
