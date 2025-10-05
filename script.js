@@ -357,7 +357,7 @@ function updateGame() {
     const targetRotation = (carPosition.targetX - carPosition.x) * 0.3;
     car.rotation.z += (targetRotation - car.rotation.z) * 0.1;
     
-    // Augmentation progressive de la difficulté (réduite)
+    // Augmentation progressive de la difficulté
     distance += OBSTACLE_SPEED * 10;
     level = Math.floor(distance / 1500) + 1;
     difficultyMultiplier = 1 + (level - 1) * 0.1;
@@ -371,8 +371,8 @@ function updateGame() {
         }
     });
     
-    // Création d'obstacles avec difficulté progressive (réduite)
-    const spawnRate = 0.008 + (level - 1) * 0.002;
+    // Création d'obstacles avec difficulté progressive
+    const spawnRate = 0.012 + (level - 1) * 0.003;
     if (Math.random() < spawnRate) {
         createObstacle();
     }
@@ -490,7 +490,7 @@ function updateMinimap() {
     // Obstacles
     obstacles.forEach(obstacle => {
         const obstacleX = 75 + (obstacle.position.x / ROAD_WIDTH) * 100;
-        const obstacleY = 200 - ((obstacle.position.z + 60) / 80) * 200;
+        const obstacleY = ((obstacle.position.z + 60) / 80) * 200;
         
         if (obstacleY >= 0 && obstacleY <= 200) {
             minimapCtx.fillStyle = obstacle.isPowerUp ? '#00ff88' : '#ff0044';
