@@ -487,26 +487,70 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .welcome-screen {
-        padding: 30px;
+        padding: 20px;
+        max-width: 90vw;
     }
     
     .welcome-screen h1 {
-        font-size: 2.5em;
+        font-size: 2em;
     }
     
     .game-title {
-        font-size: 1.2em;
+        font-size: 1em;
+    }
+    
+    .top-bar {
+        padding: 10px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    #score, #speed {
+        padding: 8px 15px;
+        font-size: 0.9em;
     }
     
     .side-panels {
         display: none;
     }
     
+    .minimap {
+        bottom: 120px;
+        right: 10px;
+        padding: 5px;
+        transform: scale(0.7);
+        transform-origin: bottom right;
+    }
+    
+    #minimapCanvas {
+        width: 100px;
+        height: 130px;
+    }
+    
     .touch-controls {
         display: flex;
+        bottom: 30px;
+    }
+    
+    .touch-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5em;
     }
     
     .touch-start {
         display: flex;
+        width: 100px;
+        height: 100px;
+        font-size: 1em;
+    }
+    
+    .game-over-screen {
+        padding: 30px;
+        max-width: 90vw;
+    }
+    
+    .game-over-screen h2 {
+        font-size: 2em;
     }
 }

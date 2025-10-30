@@ -424,6 +424,10 @@ function createEnvironment() {
 
 function setupMinimap() {
     const canvas = document.getElementById('minimapCanvas');
+    if (isMobile) {
+        canvas.width = 100;
+        canvas.height = 130;
+    }
     minimapCtx = canvas.getContext('2d');
 }
 
@@ -776,26 +780,34 @@ function createExplosion(position, color) {
 function updateMinimap() {
     if (!minimapCtx) return;
     
+    const canvas = document.getElementById('minimapCanvas');
+    const width = canvas.width;
+    const height = canvas.height;
+    
     minimapCtx.fillStyle = '#000011';
-    minimapCtx.fillRect(0, 0, 150, 200);
+    minimapCtx.fillRect(0, 0, width, height);
     
     // Route
     minimapCtx.fillStyle = '#001122';
-    minimapCtx.fillRect(25, 0, 100, 200);
+    const roadWidth = width * 0.6;
+    const roadX = (width - roadWidth) / 2;
+    minimapCtx.fillRect(roadX, 0, roadWidth, height);
     
     // Voiture
     minimapCtx.fillStyle = '#00ffff';
-    const carX = 75 + (car.position.x / ROAD_WIDTH) * 100;
-    minimapCtx.fillRect(carX - 3, 180, 6, 10);
+    const carX = width / 2 + (car.position.x / ROAD_WIDTH) * roadWidth;
+    const carSize = isMobile ? 4 : 6;
+    minimapCtx.fillRect(carX - carSize/2, height - 20, carSize, carSize + 2);
     
     // Obstacles
     obstacles.forEach(obstacle => {
-        const obstacleX = 75 + (obstacle.position.x / ROAD_WIDTH) * 100;
-        const obstacleY = ((obstacle.position.z + 60) / 80) * 200;
+        const obstacleX = width / 2 + (obstacle.position.x / ROAD_WIDTH) * roadWidth;
+        const obstacleY = ((obstacle.position.z + 60) / 80) * height;
         
-        if (obstacleY >= 0 && obstacleY <= 200) {
+        if (obstacleY >= 0 && obstacleY <= height) {
             minimapCtx.fillStyle = obstacle.isPowerUp ? '#00ff88' : '#ff0044';
-            minimapCtx.fillRect(obstacleX - 2, obstacleY - 2, 4, 4);
+            const size = isMobile ? 2 : 3;
+            minimapCtx.fillRect(obstacleX - size, obstacleY - size, size * 2, size * 2);
         }
     });
 }
