@@ -6,6 +6,18 @@ let keys = { left: false, right: false, space: false };
 let carPosition = { x: 0, targetX: 0 };
 let cameraShake = { x: 0, y: 0, intensity: 0 };
 let minimapCtx, powerUps = [], trails = [];
+let currentLevelData = {};
+let carTrails = [], speedLines = [], combo = 0, lastCollectTime = 0;
+let screenEffects = { flash: false, levelUp: false };
+let frameCount = 0, lastFPSTime = 0, fps = 60;
+
+// Object Pools pour optimisation
+const pools = {
+    obstacles: [],
+    trails: [],
+    particles: [],
+    speedLines: []
+};
 
 // Configuration
 const ROAD_WIDTH = 12;
@@ -14,8 +26,32 @@ let OBSTACLE_SPEED = 0.3;
 const MAX_SPEED = 0.8;
 let difficultyMultiplier = 1;
 
+// Détection mobile
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const MAX_PARTICLES = isMobile ? 50 : 80;
+const MAX_TRAILS = isMobile ? 15 : 25;
+const MAX_SPEED_LINES = isMobile ? 8 : 12;
+
+// Niveaux avec thèmes
+const LEVELS = {
+    1: { name: "DÉBUTANT", color: 0x00ffff, fogColor: 0x000011, obstacleColor: 0xff0044 },
+    2: { name: "PILOTE", color: 0x00ff88, fogColor: 0x001100, obstacleColor: 0xff4400 },
+    3: { name: "EXPERT", color: 0xff00ff, fogColor: 0x110011, obstacleColor: 0xff0088 },
+    4: { name: "PRO", color: 0xffff00, fogColor: 0x111100, obstacleColor: 0xff8800 },
+    5: { name: "LÉGENDE", color: 0xff0066, fogColor: 0x110000, obstacleColor: 0xff0000 }
+};
+
 // Effets visuels
-let particleSystem, trailSystem, explosionParticles = [];
+let particleSystem, trailSystem, explosionParticles = [], neonLights = [];
+
+// Géométries partagées pour performance
+const sharedGeometries = {
+    obstacle: new THREE.OctahedronGeometry(0.8),
+    cone: new THREE.ConeGeometry(0.6, 1.5, 6),
+    powerUp: new THREE.SphereGeometry(0.5),
+    trail: new THREE.SphereGeometry(0.1),
+    speedLine: new THREE.BoxGeometry(0.05, 0.05, 2)
+};
 
 // Initialisation
 function init() {
@@ -37,14 +73,22 @@ function init() {
     camera.position.set(0, 6, 8);
     camera.lookAt(0, 0, -10);
     
-    // Renderer avec post-processing
+    // Renderer optimisé pour Vercel/mobile
     const canvas = document.getElementById('gameCanvas');
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    
+    renderer = new THREE.WebGLRenderer({ 
+        canvas, 
+        antialias: !isMobile, 
+        alpha: false,
+        powerPreference: "high-performance"
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    
+    // Ombres seulement sur desktop
+    if (!isMobile) {
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.BasicShadowMap;
+    }
     
     // Éclairage néon
     const ambientLight = new THREE.AmbientLight(0x001122, 0.3);
@@ -58,13 +102,15 @@ function init() {
     mainLight.shadow.mapSize.height = 4096;
     scene.add(mainLight);
     
-    // Lumières d'ambiance néon
+    // Seulement 2 lumières néon pour performance
     const neonLight1 = new THREE.PointLight(0xff00ff, 2, 50);
-    neonLight1.position.set(-15, 5, -20);
+    neonLight1.position.set(-15, 8, -30);
+    neonLights.push(neonLight1);
     scene.add(neonLight1);
     
     const neonLight2 = new THREE.PointLight(0x00ff88, 2, 50);
-    neonLight2.position.set(15, 5, -20);
+    neonLight2.position.set(15, 8, -30);
+    neonLights.push(neonLight2);
     scene.add(neonLight2);
     
     // Création des éléments
@@ -137,12 +183,10 @@ function createCar() {
         carGroup.add(rim);
     });
     
-    // Phares
-    const headlightGeometry = new THREE.SphereGeometry(0.2, 8, 8);
-    const headlightMaterial = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff,
-        emissive: 0xffffff,
-        emissiveIntensity: 0.5
+    // Phares simples sans faisceaux coûteux
+    const headlightGeometry = new THREE.SphereGeometry(0.2, 6, 6);
+    const headlightMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xffffff
     });
     
     [-0.6, 0.6].forEach(x => {
@@ -203,45 +247,130 @@ function createRoad() {
 
 function createObstacle() {
     const obstacleType = Math.random();
-    let obstacle;
+    let obstacle = pools.obstacles.pop();
+    const levelData = LEVELS[level] || LEVELS[5];
     
-    if (obstacleType < 0.7) {
-        // Obstacle standard
-        const geometry = new THREE.OctahedronGeometry(0.8);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xff0044,
-            emissive: 0x440011,
-            transparent: true,
-            opacity: 0.9
-        });
-        obstacle = new THREE.Mesh(geometry, material);
-    } else {
-        // Power-up (bonus)
-        const geometry = new THREE.SphereGeometry(0.5);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x00ff88,
-            emissive: 0x00ff88,
-            emissiveIntensity: 0.5
-        });
-        obstacle = new THREE.Mesh(geometry, material);
-        obstacle.isPowerUp = true;
+    if (!obstacle) {
+        if (obstacleType < 0.75) {
+            const geometry = level >= 3 ? sharedGeometries.cone : sharedGeometries.obstacle;
+            const material = new THREE.MeshBasicMaterial({ 
+                color: levelData.obstacleColor
+            });
+            obstacle = new THREE.Mesh(geometry, material);
+        } else {
+            const material = new THREE.MeshBasicMaterial({ 
+                color: levelData.color
+            });
+            obstacle = new THREE.Mesh(sharedGeometries.powerUp, material);
+            obstacle.isPowerUp = true;
+        }
     }
     
+    obstacle.material.color.setHex(obstacle.isPowerUp ? levelData.color : levelData.obstacleColor);
     obstacle.position.set(
         (Math.random() - 0.5) * (ROAD_WIDTH - 3),
         obstacle.isPowerUp ? 1 : 0.8,
         -60
     );
-    obstacle.castShadow = true;
     obstacle.rotationSpeed = (Math.random() - 0.5) * 0.2;
+    obstacle.visible = true;
     
     obstacles.push(obstacle);
     scene.add(obstacle);
 }
 
+function updateLevelTheme() {
+    const levelData = LEVELS[level] || LEVELS[5];
+    
+    // Changement du brouillard
+    scene.fog.color.setHex(levelData.fogColor);
+    
+    // Mise à jour de l'interface
+    document.getElementById('levelName').textContent = levelData.name;
+    document.getElementById('levelName').style.color = `#${levelData.color.toString(16).padStart(6, '0')}`;
+    
+    // Effets de transition
+    cameraShake.intensity = 0.4;
+    showLevelUpNotification(levelData.name);
+    flashScreen();
+    
+    // Changement des lumières néon
+    neonLights.forEach((light, index) => {
+        light.color.setHex(index % 2 === 0 ? levelData.color : levelData.obstacleColor);
+    });
+    
+    currentLevelData = levelData;
+}
+
+function showLevelUpNotification(levelName) {
+    const notification = document.getElementById('levelUpNotification');
+    notification.textContent = `NIVEAU ${level}: ${levelName}`;
+    notification.classList.remove('hidden');
+    setTimeout(() => {
+        notification.classList.add('hidden');
+    }, 2000);
+}
+
+function flashScreen() {
+    const flash = document.getElementById('screenFlash');
+    flash.classList.remove('hidden');
+    setTimeout(() => {
+        flash.classList.add('hidden');
+    }, 200);
+}
+
+function createCarTrail() {
+    if (carTrails.length >= MAX_TRAILS) return;
+    
+    let trail = pools.trails.pop();
+    if (!trail) {
+        const trailMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.6
+        });
+        trail = new THREE.Mesh(sharedGeometries.trail, trailMaterial);
+    }
+    
+    trail.position.copy(car.position);
+    trail.position.y = 0.2;
+    trail.life = 1.0;
+    trail.visible = true;
+    
+    carTrails.push(trail);
+    scene.add(trail);
+}
+
+function createSpeedLines() {
+    if (speedLines.length >= MAX_SPEED_LINES) return;
+    
+    for (let i = 0; i < 3; i++) {
+        let line = pools.speedLines.pop();
+        if (!line) {
+            const lineMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.4
+            });
+            line = new THREE.Mesh(sharedGeometries.speedLine, lineMaterial);
+        }
+        
+        line.position.set(
+            (Math.random() - 0.5) * 20,
+            Math.random() * 10,
+            -Math.random() * 50 - 10
+        );
+        line.velocity = Math.random() * 2 + 1;
+        line.visible = true;
+        
+        speedLines.push(line);
+        scene.add(line);
+    }
+}
+
 function createParticleSystem() {
-    // Système de particules pour les effets
-    const particleCount = 200;
+    // Système de particules optimisé
+    const particleCount = MAX_PARTICLES;
     const particleGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities = [];
@@ -259,11 +388,13 @@ function createParticleSystem() {
         color: 0x00ffff,
         size: 0.5,
         transparent: true,
-        opacity: 0.6
+        opacity: 0.6,
+        sizeAttenuation: false
     });
     
     particleSystem = new THREE.Points(particleGeometry, particleMaterial);
     particleSystem.userData = { velocities };
+    particleSystem.frustumCulled = false;
     scene.add(particleSystem);
 }
 
@@ -297,12 +428,12 @@ function setupMinimap() {
 }
 
 function setupControls() {
+    // Contrôles clavier
     document.addEventListener('keydown', (event) => {
         if (!gameLoaded) return;
         
         if (!gameStarted && !gameOver && event.code === 'Space') {
-            gameStarted = true;
-            document.getElementById('instructions').classList.add('hidden');
+            startGame();
         }
         
         switch(event.code) {
@@ -336,6 +467,77 @@ function setupControls() {
                 break;
         }
     });
+    
+    // Contrôles tactiles
+    if (isMobile) {
+        setupTouchControls();
+    }
+}
+
+function setupTouchControls() {
+    const touchLeft = document.getElementById('touchLeft');
+    const touchRight = document.getElementById('touchRight');
+    const touchStart = document.getElementById('touchStart');
+    
+    // Bouton gauche
+    touchLeft.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.left = true;
+    });
+    touchLeft.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.left = false;
+    });
+    
+    // Bouton droite
+    touchRight.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.right = true;
+    });
+    touchRight.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.right = false;
+    });
+    
+    // Bouton start
+    touchStart.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!gameStarted && !gameOver && gameLoaded) {
+            startGame();
+        }
+    });
+    
+    // Gestion du swipe sur l'écran
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!gameStarted || gameOver) return;
+        
+        const touchX = e.touches[0].clientX;
+        const diff = touchX - touchStartX;
+        
+        if (Math.abs(diff) > 20) {
+            keys.left = diff < 0;
+            keys.right = diff > 0;
+        }
+    });
+    
+    document.addEventListener('touchend', () => {
+        keys.left = false;
+        keys.right = false;
+    });
+}
+
+function startGame() {
+    gameStarted = true;
+    document.getElementById('instructions').classList.add('hidden');
+    if (isMobile) {
+        document.getElementById('touchStart').style.display = 'none';
+    }
 }
 
 function updateGame() {
@@ -357,10 +559,27 @@ function updateGame() {
     const targetRotation = (carPosition.targetX - carPosition.x) * 0.3;
     car.rotation.z += (targetRotation - car.rotation.z) * 0.1;
     
-    // Augmentation progressive de la difficulté
+    // Création de traînées de voiture (optimisé)
+    if (frameCount % 3 === 0 && Math.random() < 0.4) {
+        createCarTrail();
+    }
+    
+    // Création de lignes de vitesse (optimisé)
+    if (frameCount % 5 === 0 && speedLines.length < MAX_SPEED_LINES) {
+        createSpeedLines();
+    }
+    
+    // Augmentation progressive de la difficulté avec niveaux
     distance += OBSTACLE_SPEED * 10;
-    level = Math.floor(distance / 1500) + 1;
-    difficultyMultiplier = 1 + (level - 1) * 0.1;
+    const newLevel = Math.floor(distance / 1200) + 1;
+    
+    // Changement de niveau
+    if (newLevel !== level) {
+        level = Math.min(newLevel, 5);
+        updateLevelTheme();
+    }
+    
+    difficultyMultiplier = 1 + (level - 1) * 0.12;
     OBSTACLE_SPEED = Math.min(0.3 * difficultyMultiplier, MAX_SPEED);
     
     // Mouvement des éléments de route
@@ -390,22 +609,37 @@ function updateGame() {
         const distance = car.position.distanceTo(obstacle.position);
         if (distance < (obstacle.isPowerUp ? 1.5 : 1.8)) {
             if (obstacle.isPowerUp) {
-                // Bonus collecté
-                score += 50;
-                createExplosion(obstacle.position, 0x00ff88);
+                // Bonus collecté avec combo
+                const currentTime = Date.now();
+                if (currentTime - lastCollectTime < 2000) {
+                    combo++;
+                } else {
+                    combo = 1;
+                }
+                lastCollectTime = currentTime;
+                
+                const bonusScore = 50 * combo;
+                score += bonusScore;
+                
+                createExplosion(obstacle.position, currentLevelData.color || 0x00ff88);
+                createPowerUpEffect(obstacle.position);
                 scene.remove(obstacle);
                 obstacles.splice(index, 1);
             } else {
                 // Collision avec obstacle
                 createExplosion(car.position, 0xff0044);
-                cameraShake.intensity = 0.5;
+                cameraShake.intensity = 0.6;
+                flashScreen();
+                combo = 0;
                 endGame();
             }
         }
         
-        // Suppression des obstacles hors écran
+        // Recyclage des obstacles hors écran
         if (obstacle.position.z > 20) {
+            obstacle.visible = false;
             scene.remove(obstacle);
+            pools.obstacles.push(obstacle);
             obstacles.splice(index, 1);
             if (!obstacle.isPowerUp) {
                 score += 10;
@@ -413,8 +647,11 @@ function updateGame() {
         }
     });
     
-    // Mise à jour des particules
+    // Mise à jour des particules et effets
     updateParticles();
+    updateCarTrails();
+    updateSpeedLines();
+    updateNeonLights();
     
     // Shake de caméra
     if (cameraShake.intensity > 0) {
@@ -429,6 +666,11 @@ function updateGame() {
     document.getElementById('speed').textContent = `${speed} KM/H`;
     document.getElementById('distance').textContent = `${Math.floor(distance)}m`;
     document.getElementById('level').textContent = level;
+    
+    // Mise à jour du nom de niveau si pas encore fait
+    if (!currentLevelData.name) {
+        updateLevelTheme();
+    }
     
     // Minimap
     updateMinimap();
@@ -451,6 +693,65 @@ function updateParticles() {
     }
     
     particleSystem.geometry.attributes.position.needsUpdate = true;
+}
+
+function updateCarTrails() {
+    for (let i = carTrails.length - 1; i >= 0; i--) {
+        const trail = carTrails[i];
+        trail.life -= 0.03;
+        trail.material.opacity = trail.life;
+        trail.position.z -= 0.1;
+        
+        if (trail.life <= 0) {
+            trail.visible = false;
+            scene.remove(trail);
+            pools.trails.push(trail);
+            carTrails.splice(i, 1);
+        }
+    }
+}
+
+function updateSpeedLines() {
+    for (let i = speedLines.length - 1; i >= 0; i--) {
+        const line = speedLines[i];
+        line.position.z += line.velocity;
+        
+        if (line.position.z > 20) {
+            line.visible = false;
+            scene.remove(line);
+            pools.speedLines.push(line);
+            speedLines.splice(i, 1);
+        }
+    }
+}
+
+function updateNeonLights() {
+    // Animation simplifiée toutes les 10 frames
+    if (frameCount % 10 === 0) {
+        const time = Date.now() * 0.003;
+        neonLights[0].intensity = 1.8 + Math.sin(time) * 0.4;
+        neonLights[1].intensity = 1.8 + Math.cos(time) * 0.4;
+    }
+}
+
+function createPowerUpEffect(position) {
+    for (let i = 0; i < 10; i++) {
+        const ringGeometry = new THREE.RingGeometry(0.5, 0.7, 8);
+        const ringMaterial = new THREE.MeshBasicMaterial({ 
+            color: currentLevelData.color || 0x00ff88,
+            transparent: true,
+            opacity: 0.8
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        
+        ring.position.copy(position);
+        ring.rotation.x = Math.PI / 2;
+        ring.scale.set(0.1, 0.1, 0.1);
+        ring.life = 1.0;
+        
+        explosionParticles.push(ring);
+        scene.add(ring);
+    }
 }
 
 function createExplosion(position, color) {
@@ -517,6 +818,12 @@ function restartGame() {
     level = 1;
     difficultyMultiplier = 1;
     OBSTACLE_SPEED = 0.3;
+    currentLevelData = {};
+    
+    // Reset du thème
+    scene.fog.color.setHex(0x000011);
+    document.getElementById('levelName').textContent = 'DÉBUTANT';
+    document.getElementById('levelName').style.color = '#00ffff';
     
     // Reset de la voiture
     car.position.set(0, 0, 5);
@@ -535,26 +842,76 @@ function restartGame() {
     explosionParticles.forEach(particle => scene.remove(particle));
     explosionParticles = [];
     
+    // Recyclage optimisé des objets
+    carTrails.forEach(trail => {
+        trail.visible = false;
+        scene.remove(trail);
+        pools.trails.push(trail);
+    });
+    carTrails = [];
+    
+    speedLines.forEach(line => {
+        line.visible = false;
+        scene.remove(line);
+        pools.speedLines.push(line);
+    });
+    speedLines = [];
+    
+    obstacles.forEach(obstacle => {
+        obstacle.visible = false;
+        scene.remove(obstacle);
+        pools.obstacles.push(obstacle);
+    });
+    obstacles = [];
+    
+    combo = 0;
+    lastCollectTime = 0;
+    
     // Reset de l'UI
     document.getElementById('gameOver').classList.add('hidden');
     document.getElementById('instructions').classList.remove('hidden');
+    if (isMobile) {
+        document.getElementById('touchStart').style.display = 'flex';
+    }
 }
 
 function animate() {
     requestAnimationFrame(animate);
+    frameCount++;
     
-    // Mise à jour des particules d'explosion
-    explosionParticles.forEach((particle, index) => {
-        particle.position.add(particle.velocity);
-        particle.velocity.multiplyScalar(0.98);
+    // Calcul FPS pour optimisation adaptative
+    const currentTime = performance.now();
+    if (currentTime - lastFPSTime > 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFPSTime = currentTime;
+        
+        // Ajustement qualité selon FPS
+        if (fps < 45) {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio * 0.8, 1));
+        } else if (fps > 55) {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+    }
+    
+    // Mise à jour des particules d'explosion (optimisé)
+    for (let i = explosionParticles.length - 1; i >= 0; i--) {
+        const particle = explosionParticles[i];
+        if (particle.velocity) {
+            particle.position.add(particle.velocity);
+            particle.velocity.multiplyScalar(0.98);
+        } else {
+            particle.scale.multiplyScalar(1.05);
+        }
+        
         particle.life -= 0.02;
         particle.material.opacity = particle.life;
         
         if (particle.life <= 0) {
             scene.remove(particle);
-            explosionParticles.splice(index, 1);
+            explosionParticles.splice(i, 1);
         }
-    });
+    }
     
     updateGame();
     renderer.render(scene, camera);

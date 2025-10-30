@@ -24,6 +24,9 @@
             <div id="speed">0 KM/H</div>
         </div>
         
+        <div id="screenFlash" class="screen-flash hidden"></div>
+        <div id="levelUpNotification" class="level-up-notification hidden"></div>
+        
         <div class="side-panels">
             <div class="left-panel">
                 <div class="stat-box">
@@ -33,6 +36,7 @@
                 <div class="stat-box">
                     <div class="stat-label">NIVEAU</div>
                     <div id="level">1</div>
+                    <div id="levelName" class="level-name">DÉBUTANT</div>
                 </div>
             </div>
             
@@ -61,8 +65,11 @@
                         <span class="key">ESPACE</span>
                         <span>Commencer</span>
                     </div>
+                    <div class="control-item" style="font-size: 0.9em; opacity: 0.7;">
+                        <span>📱 Mobile : Boutons tactiles ou swipe</span>
+                    </div>
                 </div>
-                <div class="start-hint">Appuyez sur ESPACE pour commencer</div>
+                <div class="start-hint">Appuyez sur ESPACE ou TAP TO START</div>
             </div>
         </div>
         
@@ -81,6 +88,14 @@
         <div class="minimap">
             <canvas id="minimapCanvas" width="150" height="200"></canvas>
         </div>
+        
+        <!-- Contrôles tactiles mobile -->
+        <div class="touch-controls">
+            <div class="touch-btn" id="touchLeft">←</div>
+            <div class="touch-btn" id="touchRight">→</div>
+        </div>
+        
+        <div class="touch-start" id="touchStart">TAP TO START</div>
     </div>
     
     <canvas id="gameCanvas"></canvas>
