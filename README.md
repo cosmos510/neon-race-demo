@@ -1,8 +1,8 @@
-# 🏎️ NEON RACER - Three.js Portfolio Showcase
+# NEON RACER - Three.js Portfolio Showcase
 
 Une expérience de course futuriste développée avec Three.js, démontrant des compétences avancées en développement web 3D et WebGL.
 
-## 🚀 Fonctionnalités
+## Fonctionnalités
 
 ### Gameplay Avancé
 - **Physique réaliste** : Mouvement fluide avec interpolation
@@ -30,13 +30,13 @@ Une expérience de course futuriste développée avec Three.js, démontrant des 
 - **CSS3** : Animations et effets visuels
 - **HTML5 Canvas** : Minimap et effets 2D
 
-## 🎮 Contrôles
+## Contrôles
 
 - **← →** ou **A D** : Diriger la voiture
 - **ESPACE** : Commencer la partie
 - **Responsive** : Support tactile mobile
 
-## 🛠️ Installation et Lancement
+## Installation et Lancement
 
 ```bash
 # Cloner le projet
@@ -52,7 +52,7 @@ python3 -m http.server 3000
 http://localhost:3000
 ```
 
-## 🚀 Déploiement
+## Déploiement
 
 ### Déploiement Rapide (Netlify)
 1. Connectez votre repository GitHub à [Netlify](https://netlify.com)
@@ -66,14 +66,14 @@ http://localhost:3000
 
 Voir `deploy.md` pour le guide complet.
 
-## 📱 Compatibilité
+## Compatibilité
 
 - **Navigateurs modernes** : Chrome, Firefox, Safari, Edge
 - **WebGL** : Support WebGL 1.0 requis
 - **Performance** : Optimisé pour 60 FPS
 - **Mobile** : Interface adaptative
 
-## 🎯 Objectifs du Projet
+## Objectifs du Projet
 
 Ce projet démontre :
 - Maîtrise de **Three.js** et **WebGL**
@@ -83,7 +83,7 @@ Ce projet démontre :
 - **Programmation orientée objet** JavaScript
 - **Gestion d'état** de jeu complexe
 
-## 🏆 Fonctionnalités Techniques
+## Fonctionnalités Techniques
 
 ### Rendu 3D
 - Géométries procédurales
@@ -105,14 +105,14 @@ Ce projet démontre :
 - Gestion d'événements centralisée
 - Configuration paramétrable
 
-## 📊 Métriques de Performance
+## Métriques de Performance
 
 - **FPS Target** : 60 FPS constant
 - **Draw calls** : Optimisés < 50 par frame
 - **Memory usage** : < 100MB RAM
 - **Loading time** : < 3 secondes
 
-## 🎨 Assets et Design
+## Assets et Design
 
 - **Modèles 3D** : Géométries procédurales Three.js
 - **Textures** : Matériaux générés programmatiquement
@@ -120,13 +120,13 @@ Ce projet démontre :
 - **Typographie** : Orbitron (Google Fonts)
 - **Animations** : CSS3 + Three.js
 
-## 🎮 Gameplay Optimisé
+## Gameplay Optimisé
 
 - **Difficulté équilibrée** : Moins d'obstacles pour une expérience plus accessible
 - **Progression fluide** : Montée en niveau plus graduelle
 - **Performance 60 FPS** : Optimisé pour tous les appareils
 
-## 📈 Évolutions Futures
+## Évolutions Futures
 
 - [ ] Multijoueur en temps réel
 - [ ] Éditeur de circuits
